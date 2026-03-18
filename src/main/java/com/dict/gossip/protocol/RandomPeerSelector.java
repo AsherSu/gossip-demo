@@ -24,7 +24,6 @@ public class RandomPeerSelector implements PeerSelector {
         if (others.isEmpty()) {
             return List.of();
         }
-        // TODO: 随机打乱并取前 fanout 个
         List<Node> shuffled = new ArrayList<>(others);
         Collections.shuffle(shuffled);
         int take = Math.min(fanout, shuffled.size());

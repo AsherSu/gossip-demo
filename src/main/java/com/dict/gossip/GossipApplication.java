@@ -6,6 +6,9 @@ import com.dict.gossip.model.NodeState;
 import com.dict.gossip.cluster.GossipCluster;
 import com.dict.gossip.protocol.GossipProtocol;
 import com.dict.gossip.protocol.RandomPeerSelector;
+import com.dict.gossip.rumor.HttpRumorTransport;
+import com.dict.gossip.rumor.RumorSpreader;
+import com.dict.gossip.rumor.RumorStore;
 import com.dict.gossip.server.HttpGossipServer;
 import com.dict.gossip.transport.HttpGossipTransport;
 
@@ -31,20 +34,31 @@ public class GossipApplication {
         cluster.addNode(new Node("node-2", "localhost", 8081));
         cluster.addNode(new Node("node-3", "localhost", 8082));
 
-        // 4. 组件组装
+        // 4. Gossip 组件
         RandomPeerSelector peerSelector = new RandomPeerSelector(cluster);
         HttpGossipTransport transport = new HttpGossipTransport();
         GossipProtocol protocol = new GossipProtocol(self, state, config, peerSelector, transport);
 
-        // 5. 启动接收服务
-        HttpGossipServer server = new HttpGossipServer(protocol, config.getPort());
+        // 5. 谣言传播组件
+        RumorStore rumorStore = new RumorStore(3);  // 接收 3 次后变老
+        HttpRumorTransport rumorTransport = new HttpRumorTransport();
+        RumorSpreader rumorSpreader = new RumorSpreader(self, rumorStore, peerSelector, rumorTransport, config.getFanout());
+
+        // 6. 启动接收服务（gossip + rumor）
+        HttpGossipServer server = new HttpGossipServer(protocol, rumorSpreader, config.getPort());
         server.start();
 
-        // 6. 写入初始数据（可选）
+        // 7. 写入初始数据（可选）
         state.put("key1", "value1", System.currentTimeMillis());
 
-        // 7. 启动 gossip 协议
+        // 8. 启动 gossip 协议
         protocol.start();
+
+        // 9. 启动谣言传播
+        rumorSpreader.start();
+
+        // 10. 注入谣言示例（可选，用于测试）
+        // rumorSpreader.inject("Hello from node-1!");
 
         System.out.println("Gossip node " + self.getId() + " started on port " + config.getPort());
         Thread.currentThread().join();

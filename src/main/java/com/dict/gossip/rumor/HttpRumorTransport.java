@@ -1,6 +1,5 @@
-package com.dict.gossip.transport;
+package com.dict.gossip.rumor;
 
-import com.dict.gossip.model.GossipMessage;
 import com.dict.gossip.model.Node;
 
 import java.net.URI;
@@ -10,17 +9,17 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 
 /**
- * 基于 HTTP 的 Gossip 传输实现（骨架）
+ * 基于 HTTP 的谣言传输
  */
-public class HttpGossipTransport implements com.dict.gossip.protocol.GossipTransport {
+public class HttpRumorTransport implements RumorTransport {
 
     private static final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(5))
             .build();
 
     @Override
-    public void send(Node target, GossipMessage message) {
-        String url = "http://" + target.getAddress() + "/gossip";
+    public void send(Node target, RumorMessage message) {
+        String url = "http://" + target.getAddress() + "/rumor";
         byte[] body = message.serialize();
 
         try {
@@ -31,12 +30,9 @@ public class HttpGossipTransport implements com.dict.gossip.protocol.GossipTrans
                     .POST(HttpRequest.BodyPublishers.ofByteArray(body))
                     .build();
 
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() != 200) {
-                // 记录失败，可选重试
-            }
+            httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         } catch (Exception e) {
-            // 网络异常，节点可能宕机，可记录
+            // 网络异常
             e.printStackTrace();
         }
     }

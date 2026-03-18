@@ -52,20 +52,15 @@ public class GossipProtocol {
         }
     }
 
-    /** 执行一轮 gossip */
+    /** 执行一轮 gossip 反熵 */
     private void doGossip() {
-        // TODO: 1. 调用 peerSelector 选择 K 个邻居
         List<Node> peers = peerSelector.selectPeers(self, config.getFanout());
-
-        // TODO: 2. 构建 GossipMessage
         GossipMessage msg = new GossipMessage(
                 self.getId(),
                 self.getAddress(),
                 state.snapshot(),
                 System.currentTimeMillis()
         );
-
-        // TODO: 3. 向每个 peer 发送
         for (Node peer : peers) {
             sendGossip(peer, msg);
         }
@@ -73,16 +68,14 @@ public class GossipProtocol {
 
     /** 向目标节点发送 gossip 消息 */
     private void sendGossip(Node target, GossipMessage msg) {
-        // TODO: 实现网络发送，如 HTTP POST、gRPC 等
         transport.send(target, msg);
     }
 
     /** 接收并处理来自其他节点的 gossip（由 transport 回调） */
     public void onReceive(GossipMessage msg) {
         if (msg.getSenderId().equals(self.getId())) {
-            return; // 忽略自己
+            return;
         }
-        // TODO: 合并远程状态到本地
         if (msg.getState() != null && !msg.getState().isEmpty()) {
             state.merge(msg.getState());
         }

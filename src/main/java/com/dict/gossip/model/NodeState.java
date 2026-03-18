@@ -12,9 +12,14 @@ public class NodeState {
     /** key -> (value, version) */
     private final Map<String, StateEntry> data = new ConcurrentHashMap<>();
 
+    /** LWW：仅当 version 大于等于当前版本时才覆盖 */
     public void put(String key, String value, long version) {
-        // 可扩展：仅当 version 更大时才覆盖（LWW）
-        data.put(key, new StateEntry(value, version));
+        data.compute(key, (k, old) -> {
+            if (old == null || version >= old.version) {
+                return new StateEntry(value, version);
+            }
+            return old;
+        });
     }
 
     public String get(String key) {
@@ -32,9 +37,8 @@ public class NodeState {
         return new ConcurrentHashMap<>(data);
     }
 
-    /** 合并远程状态到本地（Last-Write-Wins 策略） */
+    /** 合并远程状态到本地（Last-Write-Wins：取版本更大的） */
     public void merge(Map<String, StateEntry> remote) {
-        // TODO: 理解并尝试修改合并策略，如取并集、CRDT 等
         for (Map.Entry<String, StateEntry> e : remote.entrySet()) {
             StateEntry local = data.get(e.getKey());
             if (local == null || e.getValue().version > local.version) {

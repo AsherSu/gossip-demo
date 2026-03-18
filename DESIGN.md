@@ -109,7 +109,32 @@ onReceive(GossipMessage msg) {
 
 ---
 
-## 7. 项目结构
+## 7. 谣言传播（Rumor Mongering）
+
+谣言传播是 Gossip 的一种变体：每条消息（谣言）独立传播，收到后继续转发，直到"变老"后停止。
+
+### 7.1 流程
+
+```
+1. 节点 A 产生谣言 -> inject(rumor)
+2. A 将谣言发给随机 K 个邻居
+3. 邻居收到后：若为新谣言，记录并继续传播
+4. 当某节点收到同一谣言达到阈值次（如 fanout 次），认为"变老"，停止传播
+5. 最终谣言扩散到整个集群
+```
+
+### 7.2 关键点
+
+| 组件 | 说明 |
+|------|------|
+| **Rumor** | 谣言内容：id、content、originator、timestamp |
+| **RumorStore** | 存储谣言 + 接收次数，判断是否"变老" |
+| **RumorSpreader** | 传播逻辑：inject、spreadLoop、onReceive |
+| **RumorTransport** | 谣言网络传输 |
+
+---
+
+## 8. 项目结构
 
 ```
 src/main/java/com/dict/gossip/
@@ -126,17 +151,24 @@ src/main/java/com/dict/gossip/
 │   ├── GossipProtocol.java     # 协议主逻辑
 │   ├── PeerSelector.java       # 邻居选择接口
 │   └── RandomPeerSelector.java # 随机选择实现 ★
+├── rumor/                      # 谣言传播 ★
+│   ├── Rumor.java              # 谣言模型
+│   ├── RumorStore.java         # 谣言存储 + 变老判断
+│   ├── RumorMessage.java       # 谣言消息格式
+│   ├── RumorSpreader.java      # 传播协议
+│   ├── RumorTransport.java     # 传输接口
+│   └── HttpRumorTransport.java # HTTP 传输
 ├── transport/
 │   └── HttpGossipTransport.java # HTTP 发送 ★
 └── server/
-    └── HttpGossipServer.java   # HTTP 接收
+    └── HttpGossipServer.java   # gossip + rumor 接收
 ```
 
 ★ 标注为建议重点理解/修改的文件
 
 ---
 
-## 8. 扩展方向
+## 9. 扩展方向
 
 - **故障检测**：通过心跳判断节点存活（如 SWIM）
 - **反熵**：全量同步 vs 增量同步
