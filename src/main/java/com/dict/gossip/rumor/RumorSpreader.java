@@ -58,12 +58,15 @@ public class RumorSpreader {
 
     /** 传播一轮：将未变老的谣言发给随机邻居 */
     private void spreadRumors() {
+        // 获取所有活跃的谣言
         List<Rumor> active = store.getActiveRumors();
         if (active.isEmpty()) return;
 
+        // 获取随机的 gossip 目标
         List<Node> peers = peerSelector.selectPeers(self, fanout);
         if (peers.isEmpty()) return;
 
+        // 传播
         for (Rumor rumor : active) {
             for (Node peer : peers) {
                 sendRumor(peer, rumor);

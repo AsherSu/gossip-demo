@@ -5,9 +5,13 @@ package com.dict.gossip.rumor;
  */
 public class Rumor {
 
+    // 谣言唯一 ID
     private String id;
+    // 谣言内容
     private String content;
+    // 谣言发起者
     private String originatorId;
+    // 谣言生成时间戳
     private long timestamp;
 
     public Rumor() {}

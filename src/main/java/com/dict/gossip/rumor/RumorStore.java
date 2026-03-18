@@ -1,6 +1,8 @@
 package com.dict.gossip.rumor;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -22,10 +24,11 @@ public class RumorStore {
 
     /**
      * 记录收到一次谣言（来自 senderId），返回是否为新谣言（首次收到）
-     * 变老判断：来自不同节点数 >= oldThreshold
+     * 变老判断：收到谣言来自不同节点数 >= oldThreshold
      */
     public boolean onReceive(Rumor rumor, String senderId) {
         AtomicBoolean isNew = new AtomicBoolean(false);
+        // 添加发送方到本地谣言条目
         rumors.compute(rumor.getId(), (id, entry) -> {
             if (entry == null) {
                 isNew.set(true);
@@ -39,24 +42,21 @@ public class RumorStore {
         return isNew.get();
     }
 
-    /** 兼容：不区分发送方时使用（如 inject 时传入 originatorId） */
-    public boolean onReceive(Rumor rumor) {
-        return onReceive(rumor, rumor.getOriginatorId());
-    }
-
     public boolean isOld(String rumorId) {
         RumorEntry entry = rumors.get(rumorId);
         if (entry == null) return false;
         return entry.distinctSenderCount() >= oldThreshold;
     }
 
-    public java.util.List<Rumor> getActiveRumors() {
+    // 获取所有未变老的谣言
+    public List<Rumor> getActiveRumors() {
         return rumors.values().stream()
                 .filter(e -> !isOld(e.rumor.getId()))
                 .map(e -> e.rumor)
                 .toList();
     }
 
+    // 获取指定 ID 的谣言
     public Rumor get(String rumorId) {
         RumorEntry e = rumors.get(rumorId);
         return e != null ? e.rumor : null;
@@ -64,7 +64,8 @@ public class RumorStore {
 
     private static class RumorEntry {
         final Rumor rumor;
-        final java.util.Set<String> senders = ConcurrentHashMap.newKeySet();
+        // 谣言发送方
+        final Set<String> senders = ConcurrentHashMap.newKeySet();
 
         RumorEntry(Rumor rumor) {
             this.rumor = rumor;
