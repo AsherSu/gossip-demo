@@ -4,8 +4,10 @@ import com.dict.gossip.config.GossipConfig;
 import com.dict.gossip.model.Node;
 import com.dict.gossip.model.NodeState;
 import com.dict.gossip.cluster.GossipCluster;
+import com.dict.gossip.protocol.DefaultGossipProtocol;
 import com.dict.gossip.protocol.GossipProtocol;
 import com.dict.gossip.protocol.RandomPeerSelector;
+import com.dict.gossip.rumor.DefaultRumorSpreader;
 import com.dict.gossip.rumor.HttpRumorTransport;
 import com.dict.gossip.rumor.RumorSpreader;
 import com.dict.gossip.rumor.RumorStore;
@@ -37,12 +39,12 @@ public class GossipApplication {
         // 4. Gossip 组件
         RandomPeerSelector peerSelector = new RandomPeerSelector(cluster);
         HttpGossipTransport transport = new HttpGossipTransport();
-        GossipProtocol protocol = new GossipProtocol(self, state, config, peerSelector, transport);
+        GossipProtocol protocol = new DefaultGossipProtocol(self, state, config, peerSelector, transport);
 
         // 5. 谣言传播组件
         RumorStore rumorStore = new RumorStore(3);  // 接收 3 次后变老
         HttpRumorTransport rumorTransport = new HttpRumorTransport();
-        RumorSpreader rumorSpreader = new RumorSpreader(self, rumorStore, peerSelector, rumorTransport, config.getFanout());
+        RumorSpreader rumorSpreader = new DefaultRumorSpreader(self, rumorStore, peerSelector, rumorTransport, config.getFanout());
 
         // 6. 启动接收服务（gossip + rumor）
         HttpGossipServer server = new HttpGossipServer(protocol, rumorSpreader, config.getPort());

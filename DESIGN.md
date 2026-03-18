@@ -148,14 +148,16 @@ src/main/java/com/dict/gossip/
 ├── cluster/
 │   └── GossipCluster.java     # 集群管理
 ├── protocol/
-│   ├── GossipProtocol.java     # 协议主逻辑
+│   ├── GossipProtocol.java     # 协议接口
+│   ├── DefaultGossipProtocol.java # 协议默认实现
 │   ├── PeerSelector.java       # 邻居选择接口
 │   └── RandomPeerSelector.java # 随机选择实现 ★
 ├── rumor/                      # 谣言传播 ★
 │   ├── Rumor.java              # 谣言模型
 │   ├── RumorStore.java         # 谣言存储 + 变老判断
 │   ├── RumorMessage.java       # 谣言消息格式
-│   ├── RumorSpreader.java      # 传播协议
+│   ├── RumorSpreader.java      # 传播协议接口
+│   ├── DefaultRumorSpreader.java # 传播默认实现
 │   ├── RumorTransport.java     # 传输接口
 │   └── HttpRumorTransport.java # HTTP 传输
 ├── transport/
